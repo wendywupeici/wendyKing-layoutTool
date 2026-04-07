@@ -3222,13 +3222,13 @@ export const App = () => {
     try {
       await openDesign({ type: "current_page" }, async (session) => {
         if (session.page.type !== "absolute") {
-          setMessage("❌ 当前页面类型不支持，请在演示文稿页面使用。");
+          setMessage("❌ This page type is not supported. Please use the app in a presentation page.");
           return;
         }
 
         const elements = session.page.elements.toArray() as any[];
         if (elements.length === 0) {
-          setMessage("⚠️ 当前页面没有可排版元素。");
+          setMessage("⚠️ There are no layoutable elements on the current page.");
           return;
         }
 
@@ -3237,7 +3237,7 @@ export const App = () => {
         const imageRects = editable.filter((el) => hasImageFill(el));
 
         if (texts.length === 0 && imageRects.length === 0) {
-          setMessage("⚠️ 没有可排版的图片或文字。");
+          setMessage("⚠️ No layoutable images or text were found.");
           return;
         }
 
@@ -3492,7 +3492,7 @@ export const App = () => {
 
         if (!textLayout.bodyFlow.complete) {
           setMessage(
-            "⚠️ 当前页文字内容过多，已尽量放大文字区并缩小字号，但仍无法完整容纳。建议减少字数或拆分到下一页。",
+            "⚠️ There is too much text on this page. The app expanded the text area and reduced text size, but the content still does not fully fit. Try reducing copy or splitting it across multiple pages.",
           );
           return;
         }
@@ -3503,19 +3503,19 @@ export const App = () => {
           textImageOverlapCount === 0
         ) {
           setMessage(
-            `✅ ${layoutMode === "inspiration" ? "灵感版" : "常规版"}排版完成：模板「${baseLayout.templateName} + ${imageStyle.styleName}」，` +
-              `字号比例 ${Math.round(textLayout.bodyFlow.scale * 100)}%，文本 ${textLayout.bodyFlow.columns} 栏，主次层级已增强。`,
+            `✅ ${layoutMode === "inspiration" ? "Inspiration" : "Regular"} layout complete: template "${baseLayout.templateName} + ${imageStyle.styleName}", ` +
+              `text scale ${Math.round(textLayout.bodyFlow.scale * 100)}%, ${textLayout.bodyFlow.columns} text column(s), and improved visual hierarchy.`,
           );
           return;
         }
 
         setMessage(
-          `⚠️ 已完成排版，但检测到冲突：图-图 ${effectiveImageOverlapCount}，字-字 ${textOverlapCount}，图-字 ${textImageOverlapCount}。可再次点击优化。`,
+          `⚠️ Layout completed, but conflicts were detected: image-image ${effectiveImageOverlapCount}, text-text ${textOverlapCount}, text-image ${textImageOverlapCount}. You can run the layout again to refine it.`,
         );
       });
     } catch (error) {
       console.error(error);
-      setMessage("❌ 排版失败，请确认当前是演示文稿页面后重试。");
+      setMessage("❌ Layout failed. Please confirm that you are editing a presentation page and try again.");
     } finally {
       setLoading(false);
     }
@@ -3527,13 +3527,16 @@ export const App = () => {
         <Title size="large">🧠 Smart Layout Assistant</Title>
 
         <Text size="small" tone="secondary">
-          自动识别主次（标题/正文/主图），优先保证阅读性，再提升视觉节奏。<br />
-          目标：字-字不重叠、图-字不重叠、主图更大、副图错落。
+          Automatically detects hierarchy across headings, body text, and hero images, then
+          improves readability before adding stronger visual rhythm.
+          <br />
+          Goal: no text-text overlap, no text-image overlap, larger hero images, and better
+          image variety.
         </Text>
 
         <Rows spacing="1u">
           <Text size="small" tone="secondary">
-            选择排版模式
+            Choose a layout mode
           </Text>
           <Button
             variant={layoutMode === "regular" ? "primary" : "secondary"}
@@ -3541,7 +3544,7 @@ export const App = () => {
             disabled={loading}
             stretch
           >
-            常规排版
+            Regular Layout
           </Button>
           <Button
             variant={layoutMode === "inspiration" ? "primary" : "secondary"}
@@ -3549,7 +3552,7 @@ export const App = () => {
             disabled={loading}
             stretch
           >
-            灵感版排版
+            Inspiration Layout
           </Button>
         </Rows>
 
@@ -3560,7 +3563,7 @@ export const App = () => {
           disabled={loading}
           stretch
         >
-          🚀 一键智能排版
+          🚀 Auto Layout
         </Button>
 
         {message && (
@@ -3570,7 +3573,7 @@ export const App = () => {
         )}
 
         <Text size="xsmall" tone="secondary" alignment="center">
-          当前模式：{layoutMode === "inspiration" ? "灵感版艺术拼贴" : "常规版稳妥排版"}
+          Current mode: {layoutMode === "inspiration" ? "Inspiration Art Collage" : "Regular Editorial Layout"}
         </Text>
       </Rows>
     </Box>

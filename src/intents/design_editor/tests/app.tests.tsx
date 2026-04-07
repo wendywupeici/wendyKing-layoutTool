@@ -18,15 +18,15 @@ describe("Smart Layout App", () => {
     const result = renderInTestProvider(<App />);
 
     expect(result.getByRole("heading", { name: "🧠 Smart Layout Assistant" })).toBeTruthy();
-    expect(result.getByRole("button", { name: "常规排版" })).toBeTruthy();
-    expect(result.getByRole("button", { name: "灵感版排版" })).toBeTruthy();
-    expect(result.getByRole("button", { name: "🚀 一键智能排版" })).toBeTruthy();
+    expect(result.getByRole("button", { name: "Regular Layout" })).toBeTruthy();
+    expect(result.getByRole("button", { name: "Inspiration Layout" })).toBeTruthy();
+    expect(result.getByRole("button", { name: "🚀 Auto Layout" })).toBeTruthy();
   });
 
   it("allows clicking the smart layout button", async () => {
     const result = renderInTestProvider(<App />);
     const button = result.getByRole("button", {
-      name: "🚀 一键智能排版",
+      name: "🚀 Auto Layout",
     });
 
     await act(async () => {
