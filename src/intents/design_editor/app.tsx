@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { openDesign } from "@canva/design";
 import { Button, Text, Rows, Title, Alert, Box } from "@canva/app-ui-kit";
+import { defineMessages, useIntl } from "react-intl";
 
 // Basic rectangle used throughout the layout pipeline.
 type LayoutBox = {
@@ -3204,10 +3205,92 @@ const splitTitleSubtitleBody = (items: TextItem[]): {
   };
 };
 
+const uiMessages = defineMessages({
+  unsupportedPage: {
+    defaultMessage:
+      "This page type is not supported. Please use the app in a presentation page.",
+    description: "Error shown when the Canva page type is not compatible with the app.",
+  },
+  noElements: {
+    defaultMessage: "There are no layoutable elements on the current page.",
+    description: "Warning shown when the page has no editable text or image elements.",
+  },
+  noLayoutableContent: {
+    defaultMessage: "No layoutable images or text were found.",
+    description: "Warning shown when no supported text or image content can be processed.",
+  },
+  tooMuchText: {
+    defaultMessage:
+      "There is too much text on this page. The app expanded the text area and reduced text size, but the content still does not fully fit. Try reducing copy or splitting it across multiple pages.",
+    description: "Warning shown when page copy cannot fit even after resizing text areas.",
+  },
+  layoutComplete: {
+    defaultMessage:
+      '{mode} layout complete: template "{template}", text scale {scale}%, {columns} text column(s), and improved visual hierarchy.',
+    description: "Success message shown after layout completes without conflicts.",
+  },
+  layoutConflicts: {
+    defaultMessage:
+      "Layout completed, but conflicts were detected: image-image {imageOverlap}, text-text {textOverlap}, text-image {textImageOverlap}. You can run the layout again to refine it.",
+    description: "Warning shown after layout completes with remaining overlaps.",
+  },
+  layoutFailed: {
+    defaultMessage:
+      "Layout failed. Please confirm that you are editing a presentation page and try again.",
+    description: "Error shown when the smart layout action throws an exception.",
+  },
+  appTitle: {
+    defaultMessage: "Smart Layout Assistant",
+    description: "Main heading shown at the top of the Canva app panel.",
+  },
+  appDescription: {
+    defaultMessage:
+      "Automatically detects hierarchy across headings, body text, and hero images, then improves readability before adding stronger visual rhythm. Goal: no text-text overlap, no text-image overlap, larger hero images, and better image variety.",
+    description: "Short overview text explaining what the app does in the side panel.",
+  },
+  chooseMode: {
+    defaultMessage: "Choose a layout mode",
+    description: "Label above the layout mode buttons.",
+  },
+  regularLayout: {
+    defaultMessage: "Regular Layout",
+    description: "Button label for the regular editorial layout mode.",
+  },
+  inspirationLayout: {
+    defaultMessage: "Inspiration Layout",
+    description: "Button label for the inspiration collage layout mode.",
+  },
+  autoLayout: {
+    defaultMessage: "Auto Layout",
+    description: "Primary button label that starts the smart layout action.",
+  },
+  currentMode: {
+    defaultMessage: "Current mode: {mode}",
+    description: "Footer label showing the currently selected layout mode.",
+  },
+  inspirationModeName: {
+    defaultMessage: "Inspiration Art Collage",
+    description: "Current mode name shown when inspiration layout mode is selected.",
+  },
+  regularModeName: {
+    defaultMessage: "Regular Editorial Layout",
+    description: "Current mode name shown when regular layout mode is selected.",
+  },
+  inspirationShort: {
+    defaultMessage: "Inspiration",
+    description: "Short mode name used in status messages for inspiration layout mode.",
+  },
+  regularShort: {
+    defaultMessage: "Regular",
+    description: "Short mode name used in status messages for regular layout mode.",
+  },
+});
+
 export const App = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("regular");
+  const intl = useIntl();
 
   // Main entry:
   // 1) read current page
@@ -3222,13 +3305,13 @@ export const App = () => {
     try {
       await openDesign({ type: "current_page" }, async (session) => {
         if (session.page.type !== "absolute") {
-          setMessage("❌ This page type is not supported. Please use the app in a presentation page.");
+          setMessage(`❌ ${intl.formatMessage(uiMessages.unsupportedPage)}`);
           return;
         }
 
         const elements = session.page.elements.toArray() as any[];
         if (elements.length === 0) {
-          setMessage("⚠️ There are no layoutable elements on the current page.");
+          setMessage(`⚠️ ${intl.formatMessage(uiMessages.noElements)}`);
           return;
         }
 
@@ -3237,7 +3320,7 @@ export const App = () => {
         const imageRects = editable.filter((el) => hasImageFill(el));
 
         if (texts.length === 0 && imageRects.length === 0) {
-          setMessage("⚠️ No layoutable images or text were found.");
+          setMessage(`⚠️ ${intl.formatMessage(uiMessages.noLayoutableContent)}`);
           return;
         }
 
@@ -3491,9 +3574,7 @@ export const App = () => {
         await session.sync();
 
         if (!textLayout.bodyFlow.complete) {
-          setMessage(
-            "⚠️ There is too much text on this page. The app expanded the text area and reduced text size, but the content still does not fully fit. Try reducing copy or splitting it across multiple pages.",
-          );
+          setMessage(`⚠️ ${intl.formatMessage(uiMessages.tooMuchText)}`);
           return;
         }
 
@@ -3503,19 +3584,31 @@ export const App = () => {
           textImageOverlapCount === 0
         ) {
           setMessage(
-            `✅ ${layoutMode === "inspiration" ? "Inspiration" : "Regular"} layout complete: template "${baseLayout.templateName} + ${imageStyle.styleName}", ` +
-              `text scale ${Math.round(textLayout.bodyFlow.scale * 100)}%, ${textLayout.bodyFlow.columns} text column(s), and improved visual hierarchy.`,
+            `✅ ${intl.formatMessage(uiMessages.layoutComplete, {
+              mode: intl.formatMessage(
+                layoutMode === "inspiration"
+                  ? uiMessages.inspirationShort
+                  : uiMessages.regularShort,
+              ),
+              template: `${baseLayout.templateName} + ${imageStyle.styleName}`,
+              scale: Math.round(textLayout.bodyFlow.scale * 100),
+              columns: textLayout.bodyFlow.columns,
+            })}`,
           );
           return;
         }
 
         setMessage(
-          `⚠️ Layout completed, but conflicts were detected: image-image ${effectiveImageOverlapCount}, text-text ${textOverlapCount}, text-image ${textImageOverlapCount}. You can run the layout again to refine it.`,
+          `⚠️ ${intl.formatMessage(uiMessages.layoutConflicts, {
+            imageOverlap: effectiveImageOverlapCount,
+            textOverlap: textOverlapCount,
+            textImageOverlap: textImageOverlapCount,
+          })}`,
         );
       });
     } catch (error) {
       console.error(error);
-      setMessage("❌ Layout failed. Please confirm that you are editing a presentation page and try again.");
+      setMessage(`❌ ${intl.formatMessage(uiMessages.layoutFailed)}`);
     } finally {
       setLoading(false);
     }
@@ -3524,19 +3617,15 @@ export const App = () => {
   return (
     <Box padding="2u">
       <Rows spacing="3u">
-        <Title size="large">🧠 Smart Layout Assistant</Title>
+        <Title size="large">🧠 {intl.formatMessage(uiMessages.appTitle)}</Title>
 
         <Text size="small" tone="secondary">
-          Automatically detects hierarchy across headings, body text, and hero images, then
-          improves readability before adding stronger visual rhythm.
-          <br />
-          Goal: no text-text overlap, no text-image overlap, larger hero images, and better
-          image variety.
+          {intl.formatMessage(uiMessages.appDescription)}
         </Text>
 
         <Rows spacing="1u">
           <Text size="small" tone="secondary">
-            Choose a layout mode
+            {intl.formatMessage(uiMessages.chooseMode)}
           </Text>
           <Button
             variant={layoutMode === "regular" ? "primary" : "secondary"}
@@ -3544,7 +3633,7 @@ export const App = () => {
             disabled={loading}
             stretch
           >
-            Regular Layout
+            {intl.formatMessage(uiMessages.regularLayout)}
           </Button>
           <Button
             variant={layoutMode === "inspiration" ? "primary" : "secondary"}
@@ -3552,7 +3641,7 @@ export const App = () => {
             disabled={loading}
             stretch
           >
-            Inspiration Layout
+            {intl.formatMessage(uiMessages.inspirationLayout)}
           </Button>
         </Rows>
 
@@ -3563,7 +3652,7 @@ export const App = () => {
           disabled={loading}
           stretch
         >
-          🚀 Auto Layout
+          {`🚀 ${intl.formatMessage(uiMessages.autoLayout)}`}
         </Button>
 
         {message && (
@@ -3573,7 +3662,13 @@ export const App = () => {
         )}
 
         <Text size="xsmall" tone="secondary" alignment="center">
-          Current mode: {layoutMode === "inspiration" ? "Inspiration Art Collage" : "Regular Editorial Layout"}
+          {intl.formatMessage(uiMessages.currentMode, {
+            mode: intl.formatMessage(
+              layoutMode === "inspiration"
+                ? uiMessages.inspirationModeName
+                : uiMessages.regularModeName,
+            ),
+          })}
         </Text>
       </Rows>
     </Box>
